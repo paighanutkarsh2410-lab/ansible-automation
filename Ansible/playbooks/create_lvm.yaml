@@ -1,0 +1,77 @@
+---
+# Ansible Playbook: LVM Configuration
+# Purpose: Example playbook for creating Physical Volume, Volume Group and Logical Volume
+
+- name: Create Linux LVM Storage
+  hosts: all
+  become: yes
+
+
+  vars:
+
+    disk_device: /dev/sdb
+    volume_group: data_vg
+    logical_volume: data_lv
+    logical_volume_size: 2G
+    mount_point: /data
+
+
+  tasks:
+
+
+    - name: Install LVM package on RedHat systems
+      ansible.builtin.dnf:
+        name: lvm2
+        state: present
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+
+    - name: Install LVM package on Debian systems
+      ansible.builtin.apt:
+        name: lvm2
+        state: present
+        update_cache: yes
+      when:
+        - ansible_facts.os_family == "Debian"
+
+
+
+    - name: Create Physical Volume
+      community.general.lvg:
+        vg: "{{ volume_group }}"
+        pvs: "{{ disk_device }}"
+
+
+
+    - name: Create Logical Volume
+      community.general.lvol:
+        vg: "{{ volume_group }}"
+        lv: "{{ logical_volume }}"
+        size: "{{ logical_volume_size }}"
+        state: present
+
+
+
+    - name: Create filesystem on logical volume
+      community.general.filesystem:
+        fstype: xfs
+        dev: "/dev/{{ volume_group }}/{{ logical_volume }}"
+
+
+
+    - name: Create mount directory
+      ansible.builtin.file:
+        path: "{{ mount_point }}"
+        state: directory
+        mode: '0755'
+
+
+
+    - name: Mount logical volume permanently
+      ansible.posix.mount:
+        path: "{{ mount_point }}"
+        src: "/dev/{{ volume_group }}/{{ logical_volume }}"
+        fstype: xfs
+        state: mounted

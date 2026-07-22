@@ -1,0 +1,63 @@
+---
+# Ansible Playbook: File Copy Management
+# Purpose: Example playbook for copying files and directories to managed hosts
+
+- name: Copy Files To Managed Nodes
+  hosts: all
+  become: yes
+
+
+  vars:
+
+    source_file: files/example.conf
+    destination_file: /etc/example.conf
+
+
+
+  tasks:
+
+
+    - name: Create local files directory
+      ansible.builtin.file:
+        path: files
+        state: directory
+      delegate_to: localhost
+      run_once: yes
+
+
+
+    - name: Create example configuration file
+      ansible.builtin.copy:
+        content: |
+          # Example Configuration File
+
+          SERVER_NAME=linux-server
+          ENVIRONMENT=testing
+          MANAGED_BY=ANSIBLE
+
+        dest: "{{ source_file }}"
+      delegate_to: localhost
+      run_once: yes
+
+
+
+    - name: Copy configuration file to servers
+      ansible.builtin.copy:
+        src: "{{ source_file }}"
+        dest: "{{ destination_file }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+
+
+    - name: Verify copied file
+      ansible.builtin.stat:
+        path: "{{ destination_file }}"
+      register: file_status
+
+
+
+    - name: Display file status
+      ansible.builtin.debug:
+        msg: "Configuration file exists: {{ file_status.stat.exists }}"

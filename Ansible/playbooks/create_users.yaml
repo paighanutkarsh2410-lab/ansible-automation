@@ -1,0 +1,71 @@
+---
+# Ansible Playbook: User Management
+# Purpose: Example playbook for creating Linux users and managing groups
+
+- name: Create and Manage Linux Users
+  hosts: all
+  become: yes
+
+  vars:
+    users:
+      - username: devuser1
+        group: developers
+      - username: devuser2
+        group: developers
+      - username: adminuser
+        group: admins
+
+
+  tasks:
+
+    - name: Create user groups
+      ansible.builtin.group:
+        name: "{{ item.group }}"
+        state: present
+      loop: "{{ users }}"
+
+
+    - name: Create Linux users
+      ansible.builtin.user:
+        name: "{{ item.username }}"
+        group: "{{ item.group }}"
+        shell: /bin/bash
+        create_home: yes
+        state: present
+      loop: "{{ users }}"
+
+
+    - name: Add users to sudo group on RedHat systems
+      ansible.builtin.user:
+        name: "{{ item.username }}"
+        groups: wheel
+        append: yes
+      loop: "{{ users }}"
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+    - name: Add users to sudo group on Debian systems
+      ansible.builtin.user:
+        name: "{{ item.username }}"
+        groups: sudo
+        append: yes
+      loop: "{{ users }}"
+      when:
+        - ansible_facts.os_family == "Debian"
+
+
+    - name: Create password file
+      ansible.builtin.copy:
+        dest: /tmp/user_creation_info.txt
+        content: |
+          Users created using Ansible automation.
+
+          User List:
+          {% for user in users %}
+          - {{ user.username }}
+          {% endfor %}
+
+        owner: root
+        group: root
+        mode: '0600'

@@ -1,0 +1,43 @@
+---
+# Ansible Playbook: Update System Packages
+# Purpose: Example playbook for Linux package management
+
+- name: Update Linux System Packages
+  hosts: all
+  become: yes
+
+
+  tasks:
+
+    - name: Gather operating system information
+      ansible.builtin.setup:
+
+
+    - name: Update packages on RedHat based systems
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+    - name: Update packages on Debian based systems
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+      when:
+        - ansible_facts.os_family == "Debian"
+
+
+    - name: Remove unused packages on RedHat systems
+      ansible.builtin.dnf:
+        autoremove: yes
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+    - name: Clean package cache
+      ansible.builtin.command:
+        cmd: dnf clean all
+      when:
+        - ansible_facts.os_family == "RedHat"

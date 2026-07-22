@@ -1,0 +1,53 @@
+---
+# Ansible Playbook: Firewalld Configuration
+# Purpose: Example playbook for managing Linux firewall rules
+
+- name: Configure Firewalld Rules
+  hosts: all
+  become: yes
+
+  vars:
+
+    firewall_services:
+      - ssh
+      - http
+      - https
+
+
+  tasks:
+
+    - name: Install firewalld package
+      ansible.builtin.dnf:
+        name: firewalld
+        state: present
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+    - name: Start and enable firewalld service
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: yes
+
+
+    - name: Allow required services through firewall
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop: "{{ firewall_services }}"
+
+
+    - name: Add custom port example
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+
+    - name: Reload firewall configuration
+      ansible.builtin.command:
+        cmd: firewall-cmd --reload

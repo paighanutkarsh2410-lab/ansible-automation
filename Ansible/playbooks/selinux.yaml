@@ -1,0 +1,59 @@
+---
+# Ansible Playbook: SELinux Management
+# Purpose: Example playbook for checking and configuring SELinux
+
+- name: Configure SELinux
+  hosts: all
+  become: yes
+
+
+  vars:
+
+    selinux_state: enforcing
+
+
+  tasks:
+
+
+    - name: Install SELinux management tools
+      ansible.builtin.dnf:
+        name:
+          - policycoreutils
+          - policycoreutils-python-utils
+          - selinux-policy
+        state: present
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+
+    - name: Check current SELinux status
+      ansible.builtin.command:
+        cmd: getenforce
+      register: selinux_status
+      changed_when: false
+
+
+
+    - name: Display current SELinux mode
+      ansible.builtin.debug:
+        msg: "Current SELinux mode: {{ selinux_status.stdout }}"
+
+
+
+    - name: Configure SELinux mode permanently
+      ansible.posix.selinux:
+        policy: targeted
+        state: "{{ selinux_state }}"
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+
+    - name: Create SELinux log file
+      ansible.builtin.file:
+        path: /var/log/ansible_selinux_configured.log
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'

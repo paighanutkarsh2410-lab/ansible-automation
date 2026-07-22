@@ -1,0 +1,35 @@
+---
+# Ansible Playbook: Server Reboot
+# Purpose: Example playbook for safely rebooting Linux servers
+
+- name: Reboot Linux Servers
+  hosts: all
+  become: yes
+
+
+  tasks:
+
+
+    - name: Display reboot warning
+      ansible.builtin.debug:
+        msg: "Server {{ inventory_hostname }} will reboot now"
+
+
+
+    - name: Reboot server
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+        test_command: uptime
+
+
+
+    - name: Verify server availability
+      ansible.builtin.command:
+        cmd: uptime
+      register: uptime_result
+
+
+
+    - name: Display uptime after reboot
+      ansible.builtin.debug:
+        var: uptime_result.stdout

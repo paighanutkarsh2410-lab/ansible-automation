@@ -1,0 +1,58 @@
+---
+# Ansible Playbook: Docker Installation
+# Purpose: Example playbook for installing Docker engine on Linux
+
+- name: Install Docker Engine
+  hosts: all
+  become: yes
+
+
+  tasks:
+
+
+    - name: Install required dependencies
+      ansible.builtin.dnf:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+        state: present
+      when:
+        - ansible_facts.os_family == "RedHat"
+
+
+
+    - name: Install Docker package
+      ansible.builtin.package:
+        name: docker
+        state: present
+
+
+
+    - name: Enable and start Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+
+
+    - name: Add user to Docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+
+
+    - name: Check Docker version
+      ansible.builtin.command:
+        cmd: docker --version
+      register: docker_version
+      changed_when: false
+
+
+
+    - name: Display Docker version
+      ansible.builtin.debug:
+        var: docker_version.stdout

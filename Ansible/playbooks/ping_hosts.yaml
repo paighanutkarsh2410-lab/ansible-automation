@@ -1,0 +1,19 @@
+---
+# Ansible Playbook: Host Connectivity Check
+# Purpose: Verify connectivity between Ansible controller and managed nodes
+
+- name: Test Managed Node Connectivity
+  hosts: all
+  become: yes
+
+
+  tasks:
+
+
+    - name: Ping managed hosts
+      ansible.builtin.ping:
+
+
+    - name: Display successful connection message
+      ansible.builtin.debug:
+        msg: "Connection successful - {{ inventory_hostname }}"p

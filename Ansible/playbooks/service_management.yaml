@@ -1,0 +1,47 @@
+---
+# Ansible Playbook: Service Management
+# Purpose: Example playbook for managing Linux system services using systemd
+
+- name: Manage Linux Services
+  hosts: all
+  become: yes
+
+  vars:
+
+    services:
+      - name: sshd
+        state: started
+        enabled: yes
+
+      - name: firewalld
+        state: started
+        enabled: yes
+
+
+  tasks:
+
+    - name: Ensure required services are running
+      ansible.builtin.service:
+        name: "{{ item.name }}"
+        state: "{{ item.state }}"
+        enabled: "{{ item.enabled }}"
+      loop: "{{ services }}"
+
+
+    - name: Check service status
+      ansible.builtin.systemd:
+        name: "{{ item.name }}"
+      register: service_status
+      loop: "{{ services }}"
+
+
+    - name: Display service information
+      ansible.builtin.debug:
+        msg: "{{ item.item.name }} service is configured"
+      loop: "{{ service_status.results }}"
+
+
+    - name: Restart SSH service
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

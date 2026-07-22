@@ -1,0 +1,49 @@
+---
+# Ansible Playbook: Filesystem Mount Configuration
+# Purpose: Example playbook for formatting disks and mounting filesystems permanently
+
+- name: Configure and Mount Filesystem
+  hosts: all
+  become: yes
+
+  vars:
+    disk_device: /dev/sdc
+    filesystem_type: xfs
+    mount_point: /backup
+
+
+  tasks:
+
+    - name: Create filesystem on disk
+      community.general.filesystem:
+        fstype: "{{ filesystem_type }}"
+        dev: "{{ disk_device }}"
+
+
+    - name: Create mount directory
+      ansible.builtin.file:
+        path: "{{ mount_point }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+
+    - name: Mount filesystem permanently
+      ansible.posix.mount:
+        path: "{{ mount_point }}"
+        src: "{{ disk_device }}"
+        fstype: "{{ filesystem_type }}"
+        opts: defaults
+        state: mounted
+
+
+    - name: Verify mounted filesystem
+      ansible.builtin.command:
+        cmd: df -h "{{ mount_point }}"
+      register: mount_status
+
+
+    - name: Display mount information
+      ansible.builtin.debug:
+        var: mount_status.stdout
